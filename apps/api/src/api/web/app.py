@@ -1,4 +1,6 @@
 import logging
+import json
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 import joblib
@@ -7,6 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.web.predict.routers import router as predict_router
+from core.utils.features import FEATURE_NAMES
 from core.config.logging_setup import setup_logging
 from core.config.settings.app import settings
 from core.utils.exc import ModelLoadException, PredictionException
@@ -19,8 +22,26 @@ logger = logging.getLogger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        app.state.model = joblib.load(settings.model_path)
-        logger.info("Model loaded from %s", settings.model_path)
+        model_path = Path(settings.model_path)
+        metrics_path = model_path.with_name("model_metrics.json")
+
+        app.state.model = joblib.load(model_path)
+        logger.info("Model loaded from %s", model_path)
+
+        app.state.model_stats = json.loads(metrics_path.read_text())
+        logger.info("Model metrics loaded from %s", metrics_path)
+
+        importances = getattr(app.state.model, "feature_importances_", None)
+        if importances is None:
+            app.state.feature_importances = []
+        else:
+            pairs = [
+                {"name": name, "importance": float(importance)}
+                for name, importance in zip(FEATURE_NAMES, importances, strict=False)
+            ]
+            app.state.feature_importances = sorted(
+                pairs, key=lambda item: item["importance"], reverse=True
+            )
     except Exception as exc:
         raise ModelLoadException(f"Failed to load model: {exc}") from exc
     yield

@@ -1,11 +1,15 @@
-import type { PredictionResponse } from "../types";
+import type { FeatureImportance, PredictionResponse } from "../types";
+import { FeatureBreakdown } from "./FeatureBreakdown";
+import { NucleotideSequence } from "./NucleotideSequence";
+import { SecondaryStructureCard } from "./SecondaryStructureCard";
 import styles from "./PredictionResult.module.css";
 
 interface Props {
   result: PredictionResponse;
+  importances: FeatureImportance[];
 }
 
-export function PredictionResult({ result }: Props) {
+export function PredictionResult({ result, importances }: Props) {
   return (
     <div className={styles.card}>
       <div className={`${styles.badge} ${result.is_mirna ? styles.positive : styles.negative}`}>
@@ -22,8 +26,18 @@ export function PredictionResult({ result }: Props) {
 
       <div className={styles.sequenceBlock}>
         <span className={styles.seqLabel}>Sequence</span>
-        <code className={styles.sequence}>{result.sequence}</code>
+        <code className={styles.sequence}>
+          <NucleotideSequence sequence={result.sequence} />
+        </code>
       </div>
+
+      {result.secondary_structure && (
+        <SecondaryStructureCard structure={result.secondary_structure} />
+      )}
+
+      {Object.keys(result.feature_values).length > 0 && (
+        <FeatureBreakdown values={result.feature_values} importances={importances} />
+      )}
     </div>
   );
 }

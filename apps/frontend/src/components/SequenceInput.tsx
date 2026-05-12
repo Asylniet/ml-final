@@ -20,14 +20,18 @@ export function SequenceInput({ onSubmit, loading }: Props) {
 
   function handleExample(e: React.ChangeEvent<HTMLSelectElement>) {
     const val = EXAMPLES[e.target.value];
-    if (val) setSequence(val);
+    if (val) {
+      setSequence(val);
+    }
     e.target.value = "";
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const cleaned = sequence.trim();
-    if (cleaned) onSubmit(cleaned);
+    if (cleaned) {
+      onSubmit(cleaned);
+    }
   }
 
   return (
@@ -38,7 +42,7 @@ export function SequenceInput({ onSubmit, loading }: Props) {
         </label>
         <select onChange={handleExample} className={styles.examples} defaultValue="">
           <option value="" disabled>
-            Load example…
+            Load example...
           </option>
           {Object.keys(EXAMPLES).map((name) => (
             <option key={name} value={name}>
@@ -53,17 +57,22 @@ export function SequenceInput({ onSubmit, loading }: Props) {
         className={styles.textarea}
         value={sequence}
         onChange={(e) => setSequence(e.target.value)}
-        placeholder="Enter a sequence of A, U, G, C (or T)…"
+        placeholder="Enter a sequence of A, U, G, C (or T)..."
         rows={5}
         spellCheck={false}
       />
 
-      <p className={styles.hint}>
-        Valid characters: A, U, G, C, T &nbsp;·&nbsp; Min length: 10 nt
-      </p>
+      <p className={styles.hint}>Valid characters: A, U, G, C, T | Min length: 10 nt</p>
 
       <button type="submit" className={styles.button} disabled={loading || !sequence.trim()}>
-        {loading ? "Predicting…" : "Predict"}
+        {loading ? (
+          <span className={styles.buttonInner}>
+            <span className={styles.spinner} aria-hidden="true" />
+            Predicting...
+          </span>
+        ) : (
+          "Predict"
+        )}
       </button>
     </form>
   );

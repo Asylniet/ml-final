@@ -4,7 +4,7 @@ from core.config.settings.server import ServerSettings
 
 class ApplicationSettings(BaseSettings):
     server: ServerSettings = ServerSettings()
-    model_path: str = "models/model.joblib"
+    model_path: str = "src/models/model.joblib"
     CORS_ALLOW_ORIGINS: list[str] = [
         "http://localhost",
         "http://localhost:3000",
