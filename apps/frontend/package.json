@@ -12,13 +12,20 @@
   },
   "dependencies": {
     "react": "^19.2.5",
+<<<<<<< HEAD
     "react-dom": "^19.2.5",
     "recharts": "^3.4.1"
+=======
+    "react-dom": "^19.2.5"
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.2",
+<<<<<<< HEAD
     "@types/recharts": "^1.8.29",
+=======
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",

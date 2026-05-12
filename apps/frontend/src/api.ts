@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import type { FeatureImportance, ModelStats, PredictionResponse } from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
@@ -10,12 +11,19 @@ async function parseJsonResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>;
 }
 
+=======
+import type { PredictionResponse } from "./types";
+
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
+
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 export async function predict(sequence: string): Promise<PredictionResponse> {
   const res = await fetch(`${API_URL}/predict`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ sequence }),
   });
+<<<<<<< HEAD
   return parseJsonResponse<PredictionResponse>(res);
 }
 
@@ -27,4 +35,11 @@ export async function getFeatureImportances(): Promise<FeatureImportance[]> {
 export async function getStats(): Promise<ModelStats> {
   const res = await fetch(`${API_URL}/stats`);
   return parseJsonResponse<ModelStats>(res);
+=======
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(String(err.detail ?? "Prediction failed"));
+  }
+  return res.json() as Promise<PredictionResponse>;
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 }

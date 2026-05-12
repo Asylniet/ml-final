@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useEffect, useState } from "react";
 import { getFeatureImportances, getStats, predict } from "./api";
 import styles from "./App.module.css";
@@ -50,6 +51,19 @@ export default function App() {
       active = false;
     };
   }, []);
+=======
+import { useState } from "react";
+import { predict } from "./api";
+import { SequenceInput } from "./components/SequenceInput";
+import { PredictionResult } from "./components/PredictionResult";
+import type { PredictionResponse } from "./types";
+import styles from "./App.module.css";
+
+export default function App() {
+  const [result, setResult] = useState<PredictionResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
   async function handleSubmit(sequence: string) {
     setLoading(true);
@@ -68,6 +82,7 @@ export default function App() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
+<<<<<<< HEAD
         <div className={styles.heroRow}>
           <span className={styles.heroIcon} aria-hidden="true">
             <svg viewBox="0 0 48 48" className={styles.heroSvg}>
@@ -96,11 +111,18 @@ export default function App() {
           Predicts whether a nucleotide sequence is a genuine human pre-microRNA
           using enriched composition features, tuned Random Forest inference, and
           visual feature explanations.
+=======
+        <h1 className={styles.title}>pre-miRNA Classifier</h1>
+        <p className={styles.subtitle}>
+          Predicts whether a nucleotide sequence is a genuine human pre-microRNA
+          using sequence composition features and a Random Forest classifier.
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
         </p>
       </header>
 
       <main className={styles.main}>
         <section className={styles.section}>
+<<<<<<< HEAD
           {dashboardLoading ? (
             <div className={styles.skeletonCard}>
               <div className={styles.skeletonTitle} />
@@ -134,6 +156,8 @@ export default function App() {
         )}
 
         <section className={styles.section}>
+=======
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
           <SequenceInput onSubmit={handleSubmit} loading={loading} />
         </section>
 
@@ -145,7 +169,11 @@ export default function App() {
 
         {result && (
           <section className={styles.section}>
+<<<<<<< HEAD
             <PredictionResult result={result} importances={importances} />
+=======
+            <PredictionResult result={result} />
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
           </section>
         )}
       </main>

@@ -1,151 +1,345 @@
 # Human pre-miRNA Classifier
 
-Predicts whether a given RNA nucleotide sequence is a genuine human pre-microRNA, using sequence composition features and a Random Forest classifier.
+Interactive ML project for classifying human pre-miRNA sequences from RNA primary sequence features, with model explainability, dataset stats, and predicted RNA secondary-structure visualization.
 
-## Background
+## Overview
 
-MicroRNAs (miRNAs) are small non-coding RNA molecules (~22 nt) derived from precursor hairpin structures called **pre-miRNAs** (~60–120 nt). Their secondary structure — how the sequence folds into stems and loops — determines their biological function. Experimental structure determination is slow and expensive, so computational prediction from the primary sequence is valuable.
+This project predicts whether an RNA sequence is a real human pre-miRNA or a non-miRNA sequence.
 
-This model learns to distinguish real human pre-miRNAs from random RNA sequences with identical nucleotide composition, using 23 hand-crafted sequence features (nucleotide frequencies, GC content, dinucleotide frequencies).
+The current version includes:
 
-## Project Structure
+- a tuned `RandomForestClassifier`
+- `90` engineered sequence features
+- model metrics exported to JSON
+- feature-importance visualizations
+- per-sequence feature breakdown
+- predicted RNA secondary structure rendered as SVG with `ViennaRNA`
 
-```
+The app is split into:
+
+- `apps/api`: FastAPI backend, feature extraction, model training, inference
+- `apps/frontend`: React + TypeScript frontend for prediction and visualization
+
+## Why pre-miRNA matters
+
+MicroRNAs are short non-coding RNAs involved in gene regulation. They are produced from precursor molecules called `pre-miRNAs`, which usually form a stable hairpin secondary structure. Because experimental validation is expensive, computational screening helps identify likely candidates from sequence data.
+
+This project combines composition-based ML features with RNA folding visualization to make predictions more interpretable and more convincing in a course-demo setting.
+
+## Current model
+
+Training uses a tuned Random Forest with `RandomizedSearchCV`.
+
+Latest saved metrics from [model_metrics.json](C:/Users/user/Desktop/ML-final/ml-sis-3/apps/api/src/models/model_metrics.json):
+
+- Accuracy: `0.9115`
+- F1: `0.9063`
+- Precision: `0.9132`
+- Recall: `0.9012`
+- Cross-validation F1: `0.8851`
+- Samples: `4571`
+- Positives: `1815`
+- Negatives: `2756`
+- Features: `90`
+
+## Feature set
+
+The model uses `90` hand-crafted RNA sequence features from [features.py](C:/Users/user/Desktop/ML-final/ml-sis-3/apps/api/src/core/utils/features.py):
+
+- Sequence length
+- GC content
+- AU content
+- 4 nucleotide frequencies
+- 16 dinucleotide frequencies
+- 64 trinucleotide frequencies
+- Shannon entropy
+- Purine/pyrimidine ratio
+- GU wobble frequency
+
+## Secondary structure visualization
+
+For every prediction, the backend now also:
+
+- folds the RNA sequence into its minimum-free-energy structure
+- returns dot-bracket notation
+- returns `MFE` in kcal/mol
+- renders the predicted secondary structure as SVG
+
+This is done with `ViennaRNA`, so the UI can show a hairpin-like structure directly in the prediction result.
+
+## Project structure
+
+```text
 apps/
-  api/                        # FastAPI Python app (uv)
+  api/
     scripts/
-      download_data.py        # fetch human miRNA sequences from NCBI
-      train.py                # feature extraction + model comparison + MLflow logging
+      train.py
     src/
-      api/web/predict/        # FastAPI endpoints
+      api/web/
+        app.py
+        predict/
+          routers.py
+          schemas.py
       core/utils/
-        features.py           # feature extraction logic
-        exc.py                # custom exceptions
-      models/                 # saved model artifact (model.joblib)
-      data/                   # downloaded sequences and dataset CSV
-    mlruns/                   # MLflow tracking database (gitignored)
-  frontend/                   # React + TypeScript (Vite + pnpm)
+        features.py
+        structure.py
+      data/
+        dataset.csv
+      models/
+        model.joblib
+        model_metrics.json
+  frontend/
     src/
-      api.ts                  # API client
-      types.ts                # shared TypeScript types
-      App.tsx                 # root component
+      api.ts
+      types.ts
+      App.tsx
       components/
-        SequenceInput.tsx     # sequence textarea + examples
-        PredictionResult.tsx  # prediction display
-turbo.json                    # Turborepo task graph
-docker-compose.yml            # api + mlflow + frontend services
-Makefile                      # cross-language task orchestration
+        SequenceInput.tsx
+        PredictionResult.tsx
+        StatsPanel.tsx
+        FeatureImportanceChart.tsx
+        FeatureBreakdown.tsx
+        NucleotideSequence.tsx
+        SecondaryStructureCard.tsx
+Makefile
+docker-compose.yml
+package.json
+pnpm-workspace.yaml
+turbo.json
 ```
 
-## Setup
+## Requirements
 
-Requires: `uv`, `pnpm`, `docker`
+- Python tooling: `uv`
+- Node.js
+- `pnpm` through `corepack` or a direct `pnpm` install
+- optional: Docker
 
-```bash
-# Step 1 - install all dependencies
-make install
+## Installation
 
-# Step 2 — train all models, log to MLflow, save the best
-make train
+### Backend
 
-# Step 3a — run everything with Docker
-make run
-
-# Step 3b — or run services individually for development
-cd apps/api/src && uv run uvicorn api.web.app:app --reload   # API on :8000
-pnpm dev                                                      # frontend on :5173
-uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db --port 5001
+```powershell
+cd apps\api
+uv sync
 ```
 
-## Services
+### Frontend
 
-| Service | Local | Docker |
-|---------|-------|--------|
-| API | `http://localhost:8000` | `http://localhost:8000` |
-| Frontend | `http://localhost:5173` | `http://localhost:3000` |
-| MLflow UI | `http://localhost:5001` | `http://localhost:5001` |
+If `pnpm` is not installed globally, use `corepack`:
 
-## API
+```powershell
+cd C:\Users\user\Desktop\ML-final\ml-sis-3
+$env:COREPACK_HOME='C:\Users\user\Desktop\ML-final\ml-sis-3\.corepack'
+cmd /c corepack pnpm install
+```
+
+## Training
+
+Run training from the API app directory:
+
+```powershell
+cd apps\api
+uv run python scripts\train.py
+```
+
+Training will:
+
+- extract all `90` features
+- run `RandomizedSearchCV` on Random Forest
+- compute test metrics
+- compute `5-fold` cross-validation F1
+- save [model.joblib](C:/Users/user/Desktop/ML-final/ml-sis-3/apps/api/src/models/model.joblib)
+- save [model_metrics.json](C:/Users/user/Desktop/ML-final/ml-sis-3/apps/api/src/models/model_metrics.json)
+- log the run to MLflow
+
+## Running the backend
+
+```powershell
+cd apps\api
+uv run python src\main.py
+```
+
+Backend URL:
+
+- `http://127.0.0.1:8000`
+
+## Running the frontend
+
+```powershell
+cd C:\Users\user\Desktop\ML-final\ml-sis-3
+$env:COREPACK_HOME='C:\Users\user\Desktop\ML-final\ml-sis-3\.corepack'
+cmd /c corepack pnpm --filter @ml-sis3/frontend dev
+```
+
+Frontend URL:
+
+- `http://localhost:5173`
+
+## API endpoints
 
 ### `GET /`
+
+Health check:
+
 ```json
-{"message": "ML API is running"}
+{
+  "message": "ML API is running"
+}
+```
+
+### `GET /stats`
+
+Returns saved model statistics:
+
+```json
+{
+  "accuracy": 0.9115,
+  "f1": 0.9063,
+  "precision": 0.9132,
+  "recall": 0.9012,
+  "cv_score": 0.8851,
+  "n_samples": 4571,
+  "n_positive": 1815,
+  "n_negative": 2756,
+  "n_features": 90,
+  "model_type": "Random Forest"
+}
+```
+
+### `GET /features`
+
+Returns sorted feature importances:
+
+```json
+[
+  { "name": "UGU_freq", "importance": 0.0412 },
+  { "name": "length", "importance": 0.0384 }
+]
 ```
 
 ### `POST /predict`
 
-**Request:**
+Request:
+
 ```json
-{"sequence": "UGAGGUAGUAGGUUGUAUAGUUUAGGGUCACACCCACCACUGGGAGAUAACUAUACAAUCUACUGUCUUUCCUA"}
+{
+  "sequence": "UGAGGUAGUAGGUUGUAUAGUUUAGGGUCACACCCACCACUGGGAGAUAACUAUACAAUCUACUGUCUUUCCUA"
+}
 ```
 
-Both `T` and `U` are accepted. Only `A`, `U`, `G`, `C` (and `T`) are valid. Minimum length: 10 nt.
+Rules:
 
-**Response:**
+- `T` is automatically converted to `U`
+- allowed symbols: `A`, `U`, `G`, `C`, `T`
+- minimum length: `10`
+
+Response:
+
 ```json
 {
   "prediction": "pre-miRNA",
   "is_mirna": true,
-  "confidence": 0.83,
-  "gc_content": 0.42,
-  "length": 74,
-  "sequence": "UGAGGUAGUAGGUUGUAUAGU..."
+  "confidence": 0.9475,
+  "gc_content": 0.4324,
+  "length": 95,
+  "sequence": "UGAGGUAGUAGGUUGUAUAGUUUAGGGUCACACCCACCACUGGGAGAUAACUAUACAAUCUACUGUCUUUCCUA",
+  "feature_values": {
+    "length": 95.0,
+    "gc_content": 0.4324
+  },
+  "secondary_structure": {
+    "dot_bracket": "....((((....))))....",
+    "mfe": -29.5,
+    "svg": "<svg ...>...</svg>"
+  }
 }
+```
+
+## Frontend features
+
+The frontend now displays:
+
+- model performance cards
+- dataset composition bar
+- top feature importances chart
+- prediction confidence and sequence summary
+- color-coded nucleotide sequence
+- per-sequence feature breakdown
+- predicted RNA secondary structure image
+- dot-bracket notation and `MFE`
+
+## Demo sequences
+
+### Positive example 1
+
+```text
+UGAGGUAGUAGGUUGUAUAGUUUAGGGUCACACCCACCACUGGGAGAUAACUAUACAAUCUACUGUCUUUCCUA
+```
+
+### Positive example 2
+
+```text
+UGUCGGGUAGCUUAUCAGACUGAUGUUGACUGUUGAAUCUCAUGGCAACACCAGUCGAUGGGCUGU
+```
+
+### Negative control
+
+```text
+AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+```
+
+## Quick API checks
+
+### PowerShell
+
+```powershell
+Invoke-RestMethod http://127.0.0.1:8000/
+Invoke-RestMethod http://127.0.0.1:8000/stats
+Invoke-RestMethod http://127.0.0.1:8000/features
+```
+
+```powershell
+Invoke-RestMethod `
+  -Uri http://127.0.0.1:8000/predict `
+  -Method Post `
+  -ContentType "application/json" `
+  -Body '{"sequence":"UGAGGUAGUAGGUUGUAUAGUUUAGGGUCACACCCACCACUGGGAGAUAACUAUACAAUCUACUGUCUUUCCUA"}'
+```
+
+## Build checks
+
+### Frontend production build
+
+```powershell
+$env:COREPACK_HOME='C:\Users\user\Desktop\ML-final\ml-sis-3\.corepack'
+cmd /c corepack pnpm --filter @ml-sis3/frontend build
+```
+
+### Backend training check
+
+```powershell
+cd apps\api
+uv run python scripts\train.py
 ```
 
 ## MLflow
 
-Every `make train` run logs three experiments to MLflow and registers the best model in the Model Registry.
+The training script logs runs to MLflow and registers the trained model.
 
-```bash
-# Train locally and view results
-make train
-uv run mlflow ui --backend-store-uri sqlite:///apps/api/mlruns/mlflow.db --port 5001
+Open MLflow locally with:
 
-# Train against the running Docker MLflow server
-MLFLOW_TRACKING_URI=http://localhost:5001 make train
+```powershell
+cd apps\api
+uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db --port 5001
 ```
 
-Open `http://localhost:5001` to:
-- **Experiments** — compare all three runs side by side (params, metrics, artifacts)
-- **Models** — view registered versions of `human-pre-mirna-classifier`, promote versions through `Staging → Production`
+MLflow URL:
 
-Each run logs:
-- **Parameters** — `model_type`, `n_estimators`, train/test split sizes
-- **Metrics** — accuracy, F1-score, precision, recall
-- **Artifacts** — serialized model file + environment spec
+- `http://localhost:5001`
 
-## Model Performance
+## Notes
 
-Trained on 4571 samples (1815 real human pre-miRNAs from NCBI + 2756 negatives):
-
-| Model | Accuracy | F1-score |
-|-------|----------|----------|
-| Logistic Regression | 86% | 0.85 |
-| **Random Forest** (best) | **90%** | **0.89** |
-| Gradient Boosting | 90% | 0.89 |
-
-Negatives include dinucleotide-shuffled sequences (same composition, broken structure), poly-nucleotide sequences, low-complexity repeats, and uniformly random sequences — making the classifier robust to out-of-distribution inputs.
-
-
-### Quick validation commands
-
-```bash
-# Known positive — hsa-let-7a-1
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{"sequence": "UGAGGUAGUAGGUUGUAUAGUUUAGGGUCACACCCACCACUGGGAGAUAACUAUACAAUCUACUGUCUUUCCUA"}'
-# expected: is_mirna=true
-
-# Known positive — hsa-mir-21
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{"sequence": "UGUCGGGUAGCUUAUCAGACUGAUGUUGACUGUUGAAUCUCAUGGCAACACCAGUCGAUGGGCUGU"}'
-# expected: is_mirna=true
-
-# Negative control — poly-A
-curl -X POST http://localhost:8000/predict \
-  -H "Content-Type: application/json" \
-  -d '{"sequence": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"}'
-# expected: is_mirna=false, confidence ~0.97
-```
+- The model is composition-feature-based, not an end-to-end deep learning model.
+- The secondary-structure image is generated at inference time and is meant for interpretation and presentation.
+- The frontend currently embeds SVG returned by the backend for RNA structure display.
