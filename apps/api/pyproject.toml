@@ -1,5 +1,9 @@
 [project]
+<<<<<<< HEAD
+name = "ml-sis3"
+=======
 name = "ml-final"
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 version = "0.1.0"
 description = "ML model deployment with FastAPI and Docker"
 requires-python = ">=3.13"
@@ -12,4 +16,8 @@ dependencies = [
     "pydantic-settings>=2.11.0",
     "scikit-learn>=1.6.0",
     "uvicorn>=0.37.0",
+<<<<<<< HEAD
+    "ViennaRNA>=2.7.2",
+=======
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 ]

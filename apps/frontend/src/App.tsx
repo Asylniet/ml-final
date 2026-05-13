@@ -1,3 +1,57 @@
+<<<<<<< HEAD
+import { useEffect, useState } from "react";
+import { getFeatureImportances, getStats, predict } from "./api";
+import styles from "./App.module.css";
+import { FeatureImportanceChart } from "./components/FeatureImportanceChart";
+import { PredictionResult } from "./components/PredictionResult";
+import { SequenceInput } from "./components/SequenceInput";
+import { StatsPanel } from "./components/StatsPanel";
+import type { FeatureImportance, ModelStats, PredictionResponse } from "./types";
+
+export default function App() {
+  const [result, setResult] = useState<PredictionResponse | null>(null);
+  const [stats, setStats] = useState<ModelStats | null>(null);
+  const [importances, setImportances] = useState<FeatureImportance[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+
+    async function loadDashboard() {
+      setDashboardLoading(true);
+      setDashboardError(null);
+      try {
+        const [statsData, importancesData] = await Promise.all([
+          getStats(),
+          getFeatureImportances(),
+        ]);
+        if (!active) {
+          return;
+        }
+        setStats(statsData);
+        setImportances(importancesData);
+      } catch (err) {
+        if (!active) {
+          return;
+        }
+        setDashboardError(err instanceof Error ? err.message : "Failed to load model data");
+      } finally {
+        if (active) {
+          setDashboardLoading(false);
+        }
+      }
+    }
+
+    void loadDashboard();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+=======
 import { useState } from "react";
 import { predict } from "./api";
 import { SequenceInput } from "./components/SequenceInput";
@@ -9,6 +63,7 @@ export default function App() {
   const [result, setResult] = useState<PredictionResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
   async function handleSubmit(sequence: string) {
     setLoading(true);
@@ -27,15 +82,82 @@ export default function App() {
   return (
     <div className={styles.page}>
       <header className={styles.header}>
+<<<<<<< HEAD
+        <div className={styles.heroRow}>
+          <span className={styles.heroIcon} aria-hidden="true">
+            <svg viewBox="0 0 48 48" className={styles.heroSvg}>
+              <path
+                d="M16 7c7 0 9 7 16 7m-16 27c7 0 9-7 16-7M15 11c5 5 13 13 18 26M33 11C28 16 20 24 15 37"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="3.4"
+                strokeLinecap="round"
+              />
+              <path
+                d="M20 18h8M18 24h12M20 30h8"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.2"
+                strokeLinecap="round"
+              />
+            </svg>
+          </span>
+          <div>
+            <p className={styles.kicker}>Feature-rich sequence intelligence</p>
+            <h1 className={styles.title}>pre-miRNA Classifier</h1>
+          </div>
+        </div>
+        <p className={styles.subtitle}>
+          Predicts whether a nucleotide sequence is a genuine human pre-microRNA
+          using enriched composition features, tuned Random Forest inference, and
+          visual feature explanations.
+=======
         <h1 className={styles.title}>pre-miRNA Classifier</h1>
         <p className={styles.subtitle}>
           Predicts whether a nucleotide sequence is a genuine human pre-microRNA
           using sequence composition features and a Random Forest classifier.
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
         </p>
       </header>
 
       <main className={styles.main}>
         <section className={styles.section}>
+<<<<<<< HEAD
+          {dashboardLoading ? (
+            <div className={styles.skeletonCard}>
+              <div className={styles.skeletonTitle} />
+              <div className={styles.skeletonGrid}>
+                <div className={styles.skeletonTile} />
+                <div className={styles.skeletonTile} />
+                <div className={styles.skeletonTile} />
+                <div className={styles.skeletonTile} />
+              </div>
+            </div>
+          ) : stats ? (
+            <StatsPanel stats={stats} />
+          ) : null}
+        </section>
+
+        <section className={styles.section}>
+          {dashboardLoading ? (
+            <div className={styles.skeletonCard}>
+              <div className={styles.skeletonTitle} />
+              <div className={styles.skeletonChart} />
+            </div>
+          ) : (
+            <FeatureImportanceChart importances={importances} />
+          )}
+        </section>
+
+        {dashboardError && (
+          <div className={styles.error}>
+            <strong>Model data error:</strong> {dashboardError}
+          </div>
+        )}
+
+        <section className={styles.section}>
+=======
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
           <SequenceInput onSubmit={handleSubmit} loading={loading} />
         </section>
 
@@ -47,7 +169,11 @@ export default function App() {
 
         {result && (
           <section className={styles.section}>
+<<<<<<< HEAD
+            <PredictionResult result={result} importances={importances} />
+=======
             <PredictionResult result={result} />
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
           </section>
         )}
       </main>

@@ -54,3 +54,7 @@ apps/api/mlruns/
 # JS
 node_modules/
 apps/frontend/dist/
+
+.corepack/
+node_modules/
+.pnpm-store/

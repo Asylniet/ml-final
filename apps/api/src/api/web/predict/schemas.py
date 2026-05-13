@@ -23,3 +23,32 @@ class PredictionResponseSchema(BaseModel):
     gc_content: float
     length: int
     sequence: str
+<<<<<<< HEAD
+    feature_values: dict[str, float]
+    secondary_structure: "SecondaryStructureSchema | None" = None
+
+
+class FeatureImportanceItem(BaseModel):
+    name: str
+    importance: float
+
+
+class ModelStatsSchema(BaseModel):
+    accuracy: float
+    f1: float
+    precision: float
+    recall: float
+    cv_score: float
+    n_samples: int
+    n_positive: int
+    n_negative: int
+    n_features: int
+    model_type: str
+
+
+class SecondaryStructureSchema(BaseModel):
+    dot_bracket: str
+    mfe: float
+    svg: str
+=======
+>>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da

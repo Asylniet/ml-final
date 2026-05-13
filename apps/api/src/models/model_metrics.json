@@ -1,0 +1,12 @@
+{
+  "accuracy": 0.9114754098360656,
+  "f1": 0.9062510672692706,
+  "precision": 0.9131893042190969,
+  "recall": 0.9011633129716135,
+  "cv_score": 0.8851228772698846,
+  "n_samples": 4571,
+  "n_positive": 1815,
+  "n_negative": 2756,
+  "n_features": 90,
+  "model_type": "Random Forest"
+}
