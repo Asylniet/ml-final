@@ -26,6 +26,9 @@ services:
     container_name: ml_api
     environment:
       - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MODEL_PATH=models/model.joblib
+    volumes:
+      - ./apps/api/src/models:/app/code/models
     ports:
       - "8000:8000"
     depends_on:

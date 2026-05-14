@@ -1,5 +1,8 @@
-import type { FeatureImportance, PredictionResponse } from "../types";
+import { useState } from "react";
+import { predictMature } from "../api";
+import type { FeatureImportance, MaturePrediction, PredictionResponse } from "../types";
 import { FeatureBreakdown } from "./FeatureBreakdown";
+import { MaturePredictionCard } from "./MaturePredictionCard";
 import { NucleotideSequence } from "./NucleotideSequence";
 import { SecondaryStructureCard } from "./SecondaryStructureCard";
 import styles from "./PredictionResult.module.css";
@@ -10,6 +13,23 @@ interface Props {
 }
 
 export function PredictionResult({ result, importances }: Props) {
+  const [maturePrediction, setMaturePrediction] = useState<MaturePrediction | null>(null);
+  const [matureLoading, setMatureLoading] = useState(false);
+  const [matureError, setMatureError] = useState<string | null>(null);
+
+  async function handlePredictMature() {
+    setMatureLoading(true);
+    setMatureError(null);
+    try {
+      const data = await predictMature(result.sequence);
+      setMaturePrediction(data);
+    } catch (err) {
+      setMatureError(err instanceof Error ? err.message : "Mature miRNA model not available");
+    } finally {
+      setMatureLoading(false);
+    }
+  }
+
   return (
     <div className={styles.card}>
       <div
@@ -38,6 +58,28 @@ export function PredictionResult({ result, importances }: Props) {
           <NucleotideSequence sequence={result.sequence} />
         </code>
       </div>
+
+      {result.is_mirna && !maturePrediction && (
+        <div className={styles.maturePrompt}>
+          <button
+            className={styles.matureBtn}
+            onClick={handlePredictMature}
+            disabled={matureLoading}
+          >
+            {matureLoading ? "Predicting…" : "Predict mature miRNA sequence"}
+          </button>
+          {matureError && (
+            <span className={styles.matureErr}>{matureError}</span>
+          )}
+        </div>
+      )}
+
+      {maturePrediction && (
+        <MaturePredictionCard
+          prediction={maturePrediction}
+          hairpinSequence={result.sequence}
+        />
+      )}
 
       {result.secondary_structure && (
         <SecondaryStructureCard structure={result.secondary_structure} />

@@ -1,0 +1,191 @@
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg) 45%, var(--color-surface));
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--color-accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.title {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.metric {
+  padding: 7px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Position bar */
+.positionBar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.positionLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.track {
+  position: relative;
+  height: 10px;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.trackBg {
+  position: absolute;
+  inset: 0;
+  background: var(--color-border);
+  border-radius: 999px;
+}
+
+.trackFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--color-accent);
+  border-radius: 999px;
+  min-width: 4px;
+}
+
+.trackLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.7rem;
+  color: var(--color-muted);
+}
+
+/* Sequence display */
+.sequenceBlock,
+.matureBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seqLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-muted);
+}
+
+.sequence {
+  display: block;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+  font-size: 0.78rem;
+  line-height: 1.6;
+  word-break: break-all;
+}
+
+.flank {
+  color: var(--color-muted);
+}
+
+.mature {
+  background: color-mix(in srgb, var(--color-accent) 20%, transparent);
+  color: var(--color-accent);
+  border-radius: 3px;
+  padding: 1px 0;
+  font-weight: 700;
+}
+
+.matureBlock {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.matureSeq {
+  flex: 1;
+  display: block;
+  padding: 10px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 8%, transparent);
+  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  word-break: break-all;
+}
+
+.matureLen {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  white-space: nowrap;
+}
+
+/* Heatmap */
+.heatmapBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heatmap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.heatCell {
+  width: 8px;
+  height: 16px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  cursor: default;
+}
+
+@media (max-width: 720px) {
+  .header {
+    flex-direction: column;
+  }
+
+  .matureBlock {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

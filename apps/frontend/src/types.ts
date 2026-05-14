@@ -32,3 +32,11 @@ export interface SecondaryStructure {
   mfe: number;
   svg: string;
 }
+
+export interface MaturePrediction {
+  mature_sequence: string;
+  start: number;
+  end: number;
+  confidence: number;
+  window_scores: number[];
+}

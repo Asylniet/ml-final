@@ -1,5 +1,6 @@
 import type {
   FeatureImportance,
+  MaturePrediction,
   ModelStats,
   PredictionResponse,
 } from "./types";
@@ -34,4 +35,13 @@ export async function getFeatureImportances(): Promise<FeatureImportance[]> {
 export async function getStats(): Promise<ModelStats> {
   const res = await fetch(`${API_URL}/stats`);
   return parseJsonResponse<ModelStats>(res);
+}
+
+export async function predictMature(sequence: string): Promise<MaturePrediction> {
+  const res = await fetch(`${API_URL}/predict-mature`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ sequence }),
+  });
+  return parseJsonResponse<MaturePrediction>(res);
 }

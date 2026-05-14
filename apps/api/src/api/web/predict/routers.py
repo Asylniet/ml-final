@@ -4,6 +4,7 @@ from fastapi import APIRouter, Request
 
 from api.web.predict.schemas import (
     FeatureImportanceItem,
+    MaturePredictionResponseSchema,
     ModelStatsSchema,
     PredictionResponseSchema,
     SecondaryStructureSchema,
@@ -11,6 +12,7 @@ from api.web.predict.schemas import (
 )
 from core.utils.exc import PredictionException
 from core.utils.features import FEATURE_NAMES, extract_features
+from core.utils.mature_features import predict_mature_region
 from core.utils.structure import build_structure_payload
 
 logger = logging.getLogger(__name__)
@@ -53,6 +55,20 @@ async def predict(request: Request, body: SequenceInputSchema):
         feature_values=feature_values,
         secondary_structure=SecondaryStructureSchema(**secondary_structure),
     )
+
+
+@router.post("/predict-mature", response_model=MaturePredictionResponseSchema)
+async def predict_mature(request: Request, body: SequenceInputSchema):
+    mature_model = getattr(request.app.state, "mature_model", None)
+    if mature_model is None:
+        raise PredictionException(
+            "Mature miRNA model not loaded. Run scripts/train_mature.py first."
+        )
+    try:
+        result = predict_mature_region(body.sequence, mature_model)
+    except Exception as exc:
+        raise PredictionException(str(exc)) from exc
+    return MaturePredictionResponseSchema(**result)
 
 
 @router.get("/features", response_model=list[FeatureImportanceItem])

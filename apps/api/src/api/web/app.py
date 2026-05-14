@@ -31,6 +31,14 @@ async def lifespan(app: FastAPI):
         app.state.model_stats = json.loads(metrics_path.read_text())
         logger.info("Model metrics loaded from %s", metrics_path)
 
+        mature_model_path = model_path.with_name("mature_model.joblib")
+        if mature_model_path.exists():
+            app.state.mature_model = joblib.load(mature_model_path)
+            logger.info("Mature miRNA model loaded from %s", mature_model_path)
+        else:
+            app.state.mature_model = None
+            logger.warning("mature_model.joblib not found — /predict-mature unavailable")
+
         importances = getattr(app.state.model, "feature_importances_", None)
         if importances is None:
             app.state.feature_importances = []

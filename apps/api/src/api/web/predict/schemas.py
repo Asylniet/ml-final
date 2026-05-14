@@ -49,3 +49,11 @@ class SecondaryStructureSchema(BaseModel):
     dot_bracket: str
     mfe: float
     svg: str
+
+
+class MaturePredictionResponseSchema(BaseModel):
+    mature_sequence: str
+    start: int
+    end: int
+    confidence: float
+    window_scores: list[float]
