@@ -1,6 +1,10 @@
 """Feature extraction for mature miRNA position prediction.
 
 Each pre-miRNA is slid with a fixed-size window; features are extracted per window.
+
+Structural features use the FULL hairpin fold (computed once per sequence) rather
+than folding each 22-nt window in isolation. This is biologically correct: Dicer
+reads pairing status in the context of the whole hairpin, not isolated fragments.
 """
 
 import itertools
@@ -19,8 +23,19 @@ MATURE_FEATURE_NAMES = (
     + ["w_gc_content", "w_au_content", "w_entropy", "w_gu_wobble"]
     + ["pos_rel", "pos_from_5", "pos_from_3", "pos_dist_center"]
     + ["flank5_gc", "flank3_gc"]
-    + ["w_mfe", "w_paired_fraction", "w_amfe"]
+    + ["ctx_paired_fraction", "ctx_loop_fraction", "ctx_dist_center"]
 )
+
+
+def _fold_sequence(seq: str) -> str:
+    """Return dot-bracket structure for seq. Empty string on failure."""
+    try:
+        import RNA  # noqa: PLC0415
+        fc = RNA.fold_compound(seq)
+        structure, _ = fc.mfe()
+        return str(structure)
+    except Exception:
+        return "." * len(seq)
 
 
 def _window_composition(window: str) -> list[float]:
@@ -62,46 +77,62 @@ def _flanking_gc(seq: str, start: int, flank: int = 5) -> tuple[float, float]:
     return gc5, gc3
 
 
-def _window_structure(window: str) -> list[float]:
-    """ViennaRNA features for a short window. Zeros on failure."""
-    try:
-        import RNA  # noqa: PLC0415
-        fc = RNA.fold_compound(window)
-        structure, mfe = fc.mfe()
-        mfe = float(mfe)
-        paired = sum(1 for c in structure if c in "()")
-        paired_fraction = paired / max(len(window), 1)
-        amfe = (mfe / max(len(window), 1)) * 100
-    except Exception:
-        mfe, paired_fraction, amfe = 0.0, 0.0, 0.0
-    return [mfe, paired_fraction, amfe]
+def _context_features(structure: str, start: int, seq_len: int) -> list[float]:
+    """Pairing context from the full hairpin structure for this window.
+
+    Folding the isolated 22-nt window is misleading — a region that is paired
+    in the full hairpin may appear unpaired in isolation. These features describe
+    the actual structural environment of the window within the complete pre-miRNA.
+    """
+    if not structure or start + WINDOW_SIZE > len(structure):
+        return [0.0, 1.0, 0.5]
+
+    window_struct = structure[start : start + WINDOW_SIZE]
+    n = len(window_struct)
+    paired = sum(1 for c in window_struct if c in "()")
+    unpaired = n - paired
+
+    ctx_paired = paired / max(n, 1)
+    ctx_loop = unpaired / max(n, 1)
+
+    # Normalized distance of window center from structural center
+    # (mature miRNAs cluster near the stem ends, away from the terminal loop)
+    window_center = start + WINDOW_SIZE / 2
+    struct_center = seq_len / 2
+    ctx_dist_center = abs(window_center - struct_center) / max(struct_center, 1)
+
+    return [ctx_paired, ctx_loop, ctx_dist_center]
 
 
-def extract_window_features(seq: str, start: int) -> np.ndarray:
-    """Feature vector for one window at position `start` in `seq`."""
+def extract_window_features(seq: str, start: int, full_structure: str = "") -> np.ndarray:
+    """Feature vector for one window. Pass `full_structure` from `extract_all_windows`."""
     seq = seq.upper().replace("T", "U")
     window = seq[start : start + WINDOW_SIZE]
     comp = _window_composition(window)
     pos = _position_features(start, len(seq), WINDOW_SIZE)
     gc5, gc3 = _flanking_gc(seq, start)
-    struct = _window_structure(window)
-    return np.array([*comp, *pos, gc5, gc3, *struct], dtype=float)
+    ctx = _context_features(full_structure, start, len(seq))
+    return np.array([*comp, *pos, gc5, gc3, *ctx], dtype=float)
 
 
-def extract_all_windows(seq: str) -> tuple[np.ndarray, list[int]]:
-    """Return (feature_matrix, starts) for all valid windows in seq."""
+def extract_all_windows(seq: str) -> tuple[np.ndarray, list[int], str]:
+    """Return (feature_matrix, starts, structure) for all valid windows.
+
+    ViennaRNA is called ONCE per sequence, not once per window.
+    """
     seq = seq.upper().replace("T", "U")
+    structure = _fold_sequence(seq)
     starts = list(range(len(seq) - WINDOW_SIZE + 1))
     if not starts:
-        return np.empty((0, len(MATURE_FEATURE_NAMES))), []
-    X = np.array([extract_window_features(seq, s) for s in starts])
-    return X, starts
+        return np.empty((0, len(MATURE_FEATURE_NAMES))), [], structure
+    X = np.array([extract_window_features(seq, s, structure) for s in starts])
+    return X, starts, structure
 
 
 def predict_mature_region(seq: str, model) -> dict:
     """Slide window over seq, return best-scoring window as predicted mature miRNA."""
     seq = seq.upper().replace("T", "U")
-    X, starts = extract_all_windows(seq)
+    X, starts, _ = extract_all_windows(seq)
     if len(starts) == 0:
         return {
             "mature_sequence": "",

@@ -35,7 +35,7 @@ sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / "src"))
 from core.utils.mature_features import (
     MATURE_FEATURE_NAMES,
     WINDOW_SIZE,
-    extract_window_features,
+    extract_all_windows,
 )
 
 DATA_DIR = pathlib.Path(__file__).parent.parent / "src" / "data"
@@ -79,13 +79,14 @@ def load_dataset() -> tuple[np.ndarray, np.ndarray]:
         if max_start < 0:
             continue
 
-        for w_start in range(max_start + 1):
-            features = extract_window_features(hairpin_seq, w_start)
-            # Label: 1 if this window overlaps the mature miRNA by at least half
-            overlap_start = max(w_start, mature_start)
-            overlap_end = min(w_start + WINDOW_SIZE, mature_start + mature_length)
-            overlap = max(0, overlap_end - overlap_start)
-            label = 1 if overlap >= WINDOW_SIZE // 2 else 0
+        # Fold once per hairpin; structure passed into all window features internally
+        X_windows, w_starts, _ = extract_all_windows(hairpin_seq)
+
+        for features, w_start in zip(X_windows, w_starts):
+            # Tight label: window must start within ±2 nt of the actual mature start.
+            # This avoids the noise from overlap-based labeling which marked ~15
+            # adjacent windows as positive per mature miRNA.
+            label = 1 if abs(w_start - mature_start) <= 2 else 0
             X_list.append(features)
             y_list.append(label)
 
