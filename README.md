@@ -21,7 +21,7 @@ Binary classification: is this sequence a genuine human pre-miRNA?
 
 ### 2. Mature miRNA Position Predictor
 
-Sliding-window binary classifier: given a pre-miRNA, locate the 22-nt window most likely to be the active mature miRNA.
+Sliding-window binary classifier: given a pre-miRNA, locate the 22-nt window most likely to be the active mature miRNA. Labels come from NCBI GenBank `ncRNA` feature annotations with `/ncRNA_class="miRNA"`.
 
 | Metric | Value |
 |--------|-------|
@@ -30,11 +30,11 @@ Sliding-window binary classifier: given a pre-miRNA, locate the 22-nt window mos
 | ROC-AUC | **74.4%** |
 | Recall | 86.0% |
 | CV F1 (5-fold) | 59.7% |
-| Windows | 172,701 (56,507 pos / 116,194 neg) |
+| Windows | 172,701 |
 | Features | 30 per window |
 | Model | Random Forest |
 
-The mature predictor is a harder problem: it learns positional and structural signals from NCBI GenBank annotations. High recall (86%) prioritizes finding the mature region over precision.
+> **Note:** metrics above are pre-improvement. After the latest changes (tighter labeling + full-hairpin context features), run `make train-mature` to get updated numbers.
 
 ## Feature engineering
 
@@ -58,7 +58,9 @@ The four structure features (minimum free energy, fraction of paired bases, adju
 - GC/AU content, Shannon entropy, GU wobble
 - Positional features (relative position, distance from 5′/3′ ends, distance from center)
 - Flanking GC content (5 nt each side)
-- **ViennaRNA structure: window MFE, paired fraction, adjusted MFE**
+- **Full-hairpin context: paired fraction, loop fraction, distance from structural center**
+
+The structural features use the ViennaRNA fold of the **full pre-miRNA** (computed once per sequence), not the isolated 22-nt window. This is biologically correct: Dicer reads base-pairing status in the context of the whole hairpin, not a fragment of it.
 
 ## Architecture
 
@@ -249,5 +251,6 @@ AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 - **No deep learning.** Both models use classical ML (Random Forest, HistGradientBoosting) with hand-crafted features. This keeps the approach interpretable and within the scope of a classical Machine Learning course.
 - **ViennaRNA structure features.** MFE and paired-fraction are the strongest discriminators for pre-miRNA identity (Zhang et al. 2006). Adding them raised classifier accuracy from ~91% to ~96%.
-- **Sliding-window approach for mature prediction.** For each 22-nt window in the hairpin, the model predicts whether that window contains the mature miRNA. Labels come from NCBI GenBank feature annotations (`ncRNA` with `/ncRNA_class="miRNA"`).
+- **Sliding-window approach for mature prediction.** For each 22-nt window in the hairpin, the model predicts whether that window contains the mature miRNA. Labels come from NCBI GenBank feature annotations (`ncRNA` with `/ncRNA_class="miRNA"`). Label assignment uses a ±2 nt tolerance around the annotated mature start — tight enough to produce a clean training signal without over-labeling adjacent windows.
+- **Full-hairpin context for structural features.** Rather than folding each 22-nt window in isolation (64 ViennaRNA calls per hairpin), the full pre-miRNA is folded once and per-window structural features are extracted from the resulting dot-bracket. This reflects how Dicer actually recognizes its substrate.
 - **NCBI as single data source.** Both datasets are fetched from NCBI (FASTA for classifier, GenBank for mature predictor), avoiding dependency on miRBase FTP which is unreliable.
