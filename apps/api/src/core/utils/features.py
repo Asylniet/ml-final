@@ -8,8 +8,28 @@ _DINUCLEOTIDES = ["".join(p) for p in itertools.product(_NUCLEOTIDES, repeat=2)]
 _TRINUCLEOTIDES = ["".join(p) for p in itertools.product(_NUCLEOTIDES, repeat=3)]
 
 
+def _structure_features(seq: str, gc_content: float, n: int) -> list[float]:
+    """Compute ViennaRNA secondary structure features.
+
+    MFE and paired-fraction are the strongest discriminators for pre-miRNA
+    (Zhang et al. 2006; Batuwita & Palade 2009).
+    Returns zeros if ViennaRNA is unavailable.
+    """
+    try:
+        import RNA  # noqa: PLC0415
+        fc = RNA.fold_compound(seq)
+        structure, mfe = fc.mfe()
+        mfe = float(mfe)
+        paired = sum(1 for c in structure if c in "()")
+        paired_fraction = paired / max(n, 1)
+        amfe = (mfe / max(n, 1)) * 100        # adjusted MFE (per 100 nt)
+        mfei = amfe / gc_content if gc_content > 0 else 0.0  # MFE efficiency index
+    except Exception:
+        mfe, paired_fraction, amfe, mfei = 0.0, 0.0, 0.0, 0.0
+    return [mfe, paired_fraction, amfe, mfei]
+
+
 def extract_features(sequence: str) -> np.ndarray:
-    """Extract numerical features from a nucleotide sequence (A/U/G/C)."""
     seq = sequence.upper().replace("T", "U")
     n = len(seq)
     safe_n = max(n, 1)
@@ -40,6 +60,8 @@ def extract_features(sequence: str) -> np.ndarray:
     gu_wobble_count = sum(1 for i in range(n - 1) if seq[i : i + 2] == "GU")
     gu_wobble_freq = gu_wobble_count / total_dinuc
 
+    struct_feats = _structure_features(seq, gc_content, n)
+
     return np.array(
         [
             n,
@@ -51,6 +73,7 @@ def extract_features(sequence: str) -> np.ndarray:
             shannon_entropy,
             purine_pyrimidine_ratio,
             gu_wobble_freq,
+            *struct_feats,
         ],
         dtype=float,
     )
@@ -61,4 +84,5 @@ FEATURE_NAMES = (
     + [f"{di}_freq" for di in _DINUCLEOTIDES]
     + [f"{tri}_freq" for tri in _TRINUCLEOTIDES]
     + ["shannon_entropy", "purine_pyrimidine_ratio", "gu_wobble_freq"]
+    + ["mfe", "paired_fraction", "amfe", "mfei"]
 )

@@ -19,6 +19,7 @@ MATURE_FEATURE_NAMES = (
     + ["w_gc_content", "w_au_content", "w_entropy", "w_gu_wobble"]
     + ["pos_rel", "pos_from_5", "pos_from_3", "pos_dist_center"]
     + ["flank5_gc", "flank3_gc"]
+    + ["w_mfe", "w_paired_fraction", "w_amfe"]
 )
 
 
@@ -61,6 +62,21 @@ def _flanking_gc(seq: str, start: int, flank: int = 5) -> tuple[float, float]:
     return gc5, gc3
 
 
+def _window_structure(window: str) -> list[float]:
+    """ViennaRNA features for a short window. Zeros on failure."""
+    try:
+        import RNA  # noqa: PLC0415
+        fc = RNA.fold_compound(window)
+        structure, mfe = fc.mfe()
+        mfe = float(mfe)
+        paired = sum(1 for c in structure if c in "()")
+        paired_fraction = paired / max(len(window), 1)
+        amfe = (mfe / max(len(window), 1)) * 100
+    except Exception:
+        mfe, paired_fraction, amfe = 0.0, 0.0, 0.0
+    return [mfe, paired_fraction, amfe]
+
+
 def extract_window_features(seq: str, start: int) -> np.ndarray:
     """Feature vector for one window at position `start` in `seq`."""
     seq = seq.upper().replace("T", "U")
@@ -68,7 +84,8 @@ def extract_window_features(seq: str, start: int) -> np.ndarray:
     comp = _window_composition(window)
     pos = _position_features(start, len(seq), WINDOW_SIZE)
     gc5, gc3 = _flanking_gc(seq, start)
-    return np.array([*comp, *pos, gc5, gc3], dtype=float)
+    struct = _window_structure(window)
+    return np.array([*comp, *pos, gc5, gc3, *struct], dtype=float)
 
 
 def extract_all_windows(seq: str) -> tuple[np.ndarray, list[int]]:

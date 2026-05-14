@@ -19,7 +19,7 @@ import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -114,57 +114,78 @@ def train() -> None:
         X, y, test_size=0.2, random_state=42, stratify=y
     )
 
-    base_model = RandomForestClassifier(
-        n_estimators=300,
-        class_weight="balanced",
-        random_state=42,
-    )
-    param_distributions = {
-        "max_depth": [5, 10, 15, None],
-        "min_samples_leaf": [1, 2, 4],
-        "max_features": ["sqrt", "log2", 0.3],
-    }
+    candidates: list[tuple[str, RandomizedSearchCV]] = []
 
-    search = RandomizedSearchCV(
-        estimator=base_model,
-        param_distributions=param_distributions,
-        n_iter=15,
+    # --- Random Forest ---
+    rf_search = RandomizedSearchCV(
+        estimator=RandomForestClassifier(
+            n_estimators=400, class_weight="balanced", random_state=42
+        ),
+        param_distributions={
+            "max_depth": [10, 15, 20, None],
+            "min_samples_leaf": [1, 2, 4],
+            "max_features": ["sqrt", "log2", 0.2, 0.3],
+        },
+        n_iter=20,
         cv=5,
         scoring="f1",
         random_state=42,
         n_jobs=-1,
     )
 
-    with mlflow.start_run(run_name="Mature RF Tuned") as run:
+    # --- HistGradientBoosting ---
+    hgbc_search = RandomizedSearchCV(
+        estimator=HistGradientBoostingClassifier(
+            random_state=42, class_weight="balanced"
+        ),
+        param_distributions={
+            "max_depth": [3, 5, 8, None],
+            "learning_rate": [0.05, 0.1, 0.2],
+            "max_iter": [200, 300, 400],
+            "min_samples_leaf": [10, 20, 40],
+            "l2_regularization": [0.0, 0.1, 1.0],
+        },
+        n_iter=20,
+        cv=5,
+        scoring="f1",
+        random_state=42,
+        n_jobs=-1,
+    )
+
+    print("Training Random Forest ...")
+    rf_search.fit(X_train, y_train)
+    candidates.append(("Random Forest", rf_search))
+
+    print("Training HistGradientBoostingClassifier ...")
+    hgbc_search.fit(X_train, y_train)
+    candidates.append(("HistGradientBoosting", hgbc_search))
+
+    best_name, best_search = max(candidates, key=lambda t: t[1].best_score_)
+    model = best_search.best_estimator_
+    print(f"\nBest model: {best_name} (CV F1={best_search.best_score_:.4f})")
+
+    y_pred = model.predict(X_test)
+    y_proba = model.predict_proba(X_test)[:, list(model.classes_).index(1)]
+
+    cv_scores = cross_val_score(model, X, y, cv=5, scoring="f1", n_jobs=-1)
+    cv_score = float(cv_scores.mean())
+
+    acc = float(accuracy_score(y_test, y_pred))
+    f1 = float(f1_score(y_test, y_pred, zero_division=0))
+    prec = float(precision_score(y_test, y_pred, zero_division=0))
+    rec = float(recall_score(y_test, y_pred, zero_division=0))
+    auc = float(roc_auc_score(y_test, y_proba))
+
+    with mlflow.start_run(run_name=f"Mature {best_name} Tuned") as run:
         mlflow.log_param("train_size", len(X_train))
         mlflow.log_param("test_size", len(X_test))
         mlflow.log_param("feature_count", len(MATURE_FEATURE_NAMES))
         mlflow.log_params({
-            "model_type": "Random Forest",
-            "n_estimators": 300,
-            "class_weight": "balanced",
+            "model_type": best_name,
             "window_size": WINDOW_SIZE,
-            "search_n_iter": 15,
-            "search_cv": 5,
+            "class_weight": "balanced",
         })
-
-        print("Running RandomizedSearchCV ...")
-        search.fit(X_train, y_train)
-        model = search.best_estimator_
-
-        y_pred = model.predict(X_test)
-        y_proba = model.predict_proba(X_test)[:, list(model.classes_).index(1)]
-
-        cv_scores = cross_val_score(model, X, y, cv=5, scoring="f1", n_jobs=-1)
-        cv_score = float(cv_scores.mean())
-
-        acc = float(accuracy_score(y_test, y_pred))
-        f1 = float(f1_score(y_test, y_pred, zero_division=0))
-        prec = float(precision_score(y_test, y_pred, zero_division=0))
-        rec = float(recall_score(y_test, y_pred, zero_division=0))
-        auc = float(roc_auc_score(y_test, y_proba))
-
-        mlflow.log_params({f"best_{k}": v for k, v in search.best_params_.items()})
+        mlflow.log_params({f"best_{k}": v for k, v in best_search.best_params_.items()})
         mlflow.log_metrics({
             "accuracy": acc,
             "f1_score": f1,
@@ -175,7 +196,6 @@ def train() -> None:
         })
         mlflow.sklearn.log_model(model, artifact_path="model")
 
-        print(f"\nBest params: {search.best_params_}")
         print(f"CV F1: {cv_score:.4f}")
         print(classification_report(y_test, y_pred, target_names=["non-mature", "mature"]))
         print(f"ROC-AUC: {auc:.4f}")
@@ -200,7 +220,7 @@ def train() -> None:
         "n_negative": int((y == 0).sum()),
         "n_features": int(X.shape[1]),
         "window_size": WINDOW_SIZE,
-        "model_type": "Random Forest (window classifier)",
+        "model_type": f"{best_name} (window classifier)",
         "best_params": search.best_params_,
     }
     METRICS_PATH.write_text(json.dumps(metrics, indent=2))

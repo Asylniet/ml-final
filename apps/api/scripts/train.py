@@ -7,7 +7,7 @@ import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier, RandomForestClassifier
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -69,63 +69,78 @@ def train() -> None:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
-    base_model = RandomForestClassifier(n_estimators=400, random_state=42)
-    param_distributions = {
-        "max_depth": [5, 10, 15, None],
-        "min_samples_leaf": [1, 2, 4],
-        "max_features": ["sqrt", "log2", 0.3],
-    }
 
-    search = RandomizedSearchCV(
-        estimator=base_model,
-        param_distributions=param_distributions,
-        n_iter=20,
+    candidates: list[tuple[str, RandomizedSearchCV]] = []
+
+    # --- Random Forest ---
+    rf_search = RandomizedSearchCV(
+        estimator=RandomForestClassifier(n_estimators=500, random_state=42),
+        param_distributions={
+            "max_depth": [10, 15, 20, None],
+            "min_samples_leaf": [1, 2, 4],
+            "max_features": ["sqrt", "log2", 0.2, 0.3],
+        },
+        n_iter=30,
         cv=5,
         scoring="f1_macro",
         random_state=42,
         n_jobs=-1,
     )
 
-    with mlflow.start_run(run_name="Random Forest Tuned") as run:
+    # --- HistGradientBoosting (faster, often higher accuracy) ---
+    hgbc_search = RandomizedSearchCV(
+        estimator=HistGradientBoostingClassifier(random_state=42, class_weight="balanced"),
+        param_distributions={
+            "max_depth": [3, 5, 8, None],
+            "learning_rate": [0.05, 0.1, 0.2],
+            "max_iter": [200, 300, 400],
+            "min_samples_leaf": [10, 20, 40],
+            "l2_regularization": [0.0, 0.1, 1.0],
+        },
+        n_iter=30,
+        cv=5,
+        scoring="f1_macro",
+        random_state=42,
+        n_jobs=-1,
+    )
+
+    print("Training Random Forest ...")
+    rf_search.fit(X_train, y_train)
+    candidates.append(("Random Forest", rf_search))
+
+    print("Training HistGradientBoostingClassifier ...")
+    hgbc_search.fit(X_train, y_train)
+    candidates.append(("HistGradientBoosting", hgbc_search))
+
+    # Pick model with highest CV score
+    best_name, best_search = max(candidates, key=lambda t: t[1].best_score_)
+    model = best_search.best_estimator_
+    print(f"\nBest model: {best_name} (CV F1={best_search.best_score_:.4f})")
+
+    y_pred = model.predict(X_test)
+    cv_scores = cross_val_score(model, X, y, cv=5, scoring="f1_macro", n_jobs=-1)
+    cv_score = float(cv_scores.mean())
+
+    acc = float(accuracy_score(y_test, y_pred))
+    f1 = float(f1_score(y_test, y_pred, average="macro"))
+    prec = float(precision_score(y_test, y_pred, average="macro", zero_division=0))
+    rec = float(recall_score(y_test, y_pred, average="macro", zero_division=0))
+
+    with mlflow.start_run(run_name=f"{best_name} Tuned") as run:
         mlflow.log_param("train_size", len(X_train))
         mlflow.log_param("test_size", len(X_test))
         mlflow.log_param("feature_count", len(FEATURE_NAMES))
-        mlflow.log_params(
-            {
-                "model_type": "Random Forest",
-                "n_estimators": 400,
-                "search_n_iter": 20,
-                "search_cv": 5,
-            }
-        )
-
-        print("Running RandomizedSearchCV for Random Forest ...")
-        search.fit(X_train, y_train)
-        model = search.best_estimator_
-        y_pred = model.predict(X_test)
-
-        cv_scores = cross_val_score(model, X, y, cv=5, scoring="f1_macro", n_jobs=-1)
-        cv_score = float(cv_scores.mean())
-
-        acc = float(accuracy_score(y_test, y_pred))
-        f1 = float(f1_score(y_test, y_pred, average="macro"))
-        prec = float(precision_score(y_test, y_pred, average="macro", zero_division=0))
-        rec = float(recall_score(y_test, y_pred, average="macro", zero_division=0))
-
-        mlflow.log_params({f"best_{key}": value for key, value in search.best_params_.items()})
-        mlflow.log_metrics(
-            {
-                "accuracy": acc,
-                "f1_score": f1,
-                "precision": prec,
-                "recall": rec,
-                "cv_f1_macro": cv_score,
-            }
-        )
+        mlflow.log_param("model_type", best_name)
+        mlflow.log_params({f"best_{k}": v for k, v in best_search.best_params_.items()})
+        mlflow.log_metrics({
+            "accuracy": acc,
+            "f1_score": f1,
+            "precision": prec,
+            "recall": rec,
+            "cv_f1_macro": cv_score,
+        })
         mlflow.sklearn.log_model(model, artifact_path="model")
 
-        print("\n--- Random Forest Tuned ---")
-        print(f"Best params: {search.best_params_}")
         print(f"Cross-val macro F1: {cv_score:.4f}")
         print(classification_report(y_test, y_pred, target_names=["non-miRNA", "pre-miRNA"]))
 
@@ -147,7 +162,7 @@ def train() -> None:
         "n_positive": int(y.sum()),
         "n_negative": int((y == 0).sum()),
         "n_features": int(X.shape[1]),
-        "model_type": "Random Forest",
+        "model_type": best_name,
     }
     METRICS_PATH.write_text(json.dumps(metrics, indent=2))
     print(f"Saved metrics to {METRICS_PATH}")
