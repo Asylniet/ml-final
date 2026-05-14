@@ -5,7 +5,6 @@ export interface PredictionResponse {
   gc_content: number;
   length: number;
   sequence: string;
-<<<<<<< HEAD
   feature_values: Record<string, number>;
   secondary_structure: SecondaryStructure | null;
 }
@@ -32,6 +31,4 @@ export interface SecondaryStructure {
   dot_bracket: string;
   mfe: number;
   svg: string;
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 }

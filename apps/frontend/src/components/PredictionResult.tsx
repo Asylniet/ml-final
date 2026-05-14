@@ -1,34 +1,32 @@
-<<<<<<< HEAD
 import type { FeatureImportance, PredictionResponse } from "../types";
 import { FeatureBreakdown } from "./FeatureBreakdown";
 import { NucleotideSequence } from "./NucleotideSequence";
 import { SecondaryStructureCard } from "./SecondaryStructureCard";
-=======
-import type { PredictionResponse } from "../types";
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 import styles from "./PredictionResult.module.css";
 
 interface Props {
   result: PredictionResponse;
-<<<<<<< HEAD
   importances: FeatureImportance[];
 }
 
 export function PredictionResult({ result, importances }: Props) {
-=======
-}
-
-export function PredictionResult({ result }: Props) {
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
   return (
     <div className={styles.card}>
-      <div className={`${styles.badge} ${result.is_mirna ? styles.positive : styles.negative}`}>
+      <div
+        className={`${styles.badge} ${result.is_mirna ? styles.positive : styles.negative}`}
+      >
         {result.prediction}
       </div>
 
       <div className={styles.metrics}>
-        <Metric label="Confidence" value={`${(result.confidence * 100).toFixed(1)}%`} />
-        <Metric label="GC Content" value={`${(result.gc_content * 100).toFixed(1)}%`} />
+        <Metric
+          label="Confidence"
+          value={`${(result.confidence * 100).toFixed(1)}%`}
+        />
+        <Metric
+          label="GC Content"
+          value={`${(result.gc_content * 100).toFixed(1)}%`}
+        />
         <Metric label="Length" value={`${result.length} nt`} />
       </div>
 
@@ -36,7 +34,6 @@ export function PredictionResult({ result }: Props) {
 
       <div className={styles.sequenceBlock}>
         <span className={styles.seqLabel}>Sequence</span>
-<<<<<<< HEAD
         <code className={styles.sequence}>
           <NucleotideSequence sequence={result.sequence} />
         </code>
@@ -47,12 +44,11 @@ export function PredictionResult({ result }: Props) {
       )}
 
       {Object.keys(result.feature_values).length > 0 && (
-        <FeatureBreakdown values={result.feature_values} importances={importances} />
+        <FeatureBreakdown
+          values={result.feature_values}
+          importances={importances}
+        />
       )}
-=======
-        <code className={styles.sequence}>{result.sequence}</code>
-      </div>
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
     </div>
   );
 }
@@ -66,7 +62,13 @@ function Metric({ label, value }: { label: string; value: string }) {
   );
 }
 
-function ConfidenceBar({ value, positive }: { value: number; positive: boolean }) {
+function ConfidenceBar({
+  value,
+  positive,
+}: {
+  value: number;
+  positive: boolean;
+}) {
   return (
     <div className={styles.barTrack}>
       <div

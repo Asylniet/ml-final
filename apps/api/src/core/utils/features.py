@@ -1,37 +1,23 @@
 import itertools
-<<<<<<< HEAD
 import math
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 import numpy as np
 
 _NUCLEOTIDES = ["A", "U", "G", "C"]
 _DINUCLEOTIDES = ["".join(p) for p in itertools.product(_NUCLEOTIDES, repeat=2)]
-<<<<<<< HEAD
 _TRINUCLEOTIDES = ["".join(p) for p in itertools.product(_NUCLEOTIDES, repeat=3)]
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 
 def extract_features(sequence: str) -> np.ndarray:
     """Extract numerical features from a nucleotide sequence (A/U/G/C)."""
     seq = sequence.upper().replace("T", "U")
     n = len(seq)
-<<<<<<< HEAD
     safe_n = max(n, 1)
 
     nt_counts = {nt: seq.count(nt) for nt in _NUCLEOTIDES}
     nt_freqs = [nt_counts[nt] / safe_n for nt in _NUCLEOTIDES]
     gc_content = (nt_counts["G"] + nt_counts["C"]) / safe_n
     au_content = (nt_counts["A"] + nt_counts["U"]) / safe_n
-=======
-
-    nt_counts = {nt: seq.count(nt) for nt in _NUCLEOTIDES}
-    nt_freqs = [nt_counts[nt] / n for nt in _NUCLEOTIDES]
-    gc_content = (nt_counts["G"] + nt_counts["C"]) / n
-    au_content = (nt_counts["A"] + nt_counts["U"]) / n
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
     dinuc_freqs = []
     total_dinuc = n - 1 if n > 1 else 1
@@ -39,7 +25,6 @@ def extract_features(sequence: str) -> np.ndarray:
         count = sum(1 for i in range(n - 1) if seq[i : i + 2] == di)
         dinuc_freqs.append(count / total_dinuc)
 
-<<<<<<< HEAD
     trinuc_freqs = []
     total_trinuc = n - 2 if n > 2 else 1
     for tri in _TRINUCLEOTIDES:
@@ -69,18 +54,11 @@ def extract_features(sequence: str) -> np.ndarray:
         ],
         dtype=float,
     )
-=======
-    return np.array([n, gc_content, au_content, *nt_freqs, *dinuc_freqs], dtype=float)
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
-
 
 FEATURE_NAMES = (
     ["length", "gc_content", "au_content"]
     + [f"{nt}_freq" for nt in _NUCLEOTIDES]
     + [f"{di}_freq" for di in _DINUCLEOTIDES]
-<<<<<<< HEAD
     + [f"{tri}_freq" for tri in _TRINUCLEOTIDES]
     + ["shannon_entropy", "purine_pyrimidine_ratio", "gu_wobble_freq"]
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 )

@@ -1,21 +1,13 @@
+import json
 import os
 import pathlib
 import sys
-<<<<<<< HEAD
-import json
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 import joblib
 import mlflow
 import mlflow.sklearn
 import numpy as np
-<<<<<<< HEAD
 from sklearn.ensemble import RandomForestClassifier
-=======
-from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
-from sklearn.linear_model import LogisticRegression
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 from sklearn.metrics import (
     accuracy_score,
     classification_report,
@@ -23,28 +15,23 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
-<<<<<<< HEAD
-from sklearn.model_selection import RandomizedSearchCV, cross_val_score, train_test_split
+from sklearn.model_selection import (
+    RandomizedSearchCV,
+    cross_val_score,
+    train_test_split,
+)
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / "src"))
+
 from core.utils.features import FEATURE_NAMES, extract_features
-=======
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(pathlib.Path(__file__).parent.parent / "src"))
-from core.utils.features import extract_features
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 DATA_DIR = pathlib.Path(__file__).parent.parent / "src" / "data"
 MODELS_DIR = pathlib.Path(__file__).parent.parent / "src" / "models"
 DATASET_CSV = DATA_DIR / "dataset.csv"
 MODEL_PATH = MODELS_DIR / "model.joblib"
-<<<<<<< HEAD
 METRICS_PATH = MODELS_DIR / "model_metrics.json"
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 EXPERIMENT_NAME = "human-pre-mirna-classifier"
 REGISTERED_MODEL_NAME = "human-pre-mirna-classifier"
@@ -82,7 +69,6 @@ def train() -> None:
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42, stratify=y
     )
-<<<<<<< HEAD
     base_model = RandomForestClassifier(n_estimators=400, random_state=42)
     param_distributions = {
         "max_depth": [5, 10, 15, None],
@@ -165,63 +151,6 @@ def train() -> None:
     }
     METRICS_PATH.write_text(json.dumps(metrics, indent=2))
     print(f"Saved metrics to {METRICS_PATH}")
-=======
-
-    models: list[tuple[str, object, dict]] = [
-        (
-            "Logistic Regression",
-            Pipeline([("scaler", StandardScaler()), ("clf", LogisticRegression(max_iter=1000))]),
-            {"max_iter": 1000, "model_type": "Logistic Regression"},
-        ),
-        (
-            "Random Forest",
-            RandomForestClassifier(n_estimators=200, random_state=42),
-            {"n_estimators": 200, "random_state": 42, "model_type": "Random Forest"},
-        ),
-        (
-            "Gradient Boosting",
-            GradientBoostingClassifier(n_estimators=200, random_state=42),
-            {"n_estimators": 200, "random_state": 42, "model_type": "Gradient Boosting"},
-        ),
-    ]
-
-    best_run_id: str | None = None
-    best_name, best_model, best_acc = "", None, 0.0
-
-    for run_name, model, params in models:
-        with mlflow.start_run(run_name=run_name) as run:
-            mlflow.log_params(params)
-            mlflow.log_param("train_size", len(X_train))
-            mlflow.log_param("test_size", len(X_test))
-
-            model.fit(X_train, y_train)
-            y_pred = model.predict(X_test)
-
-            acc = accuracy_score(y_test, y_pred)
-            f1 = f1_score(y_test, y_pred, average="macro")
-            prec = precision_score(y_test, y_pred, average="macro")
-            rec = recall_score(y_test, y_pred, average="macro")
-
-            mlflow.log_metrics({"accuracy": acc, "f1_score": f1, "precision": prec, "recall": rec})
-            mlflow.sklearn.log_model(model, artifact_path="model")
-
-            print(f"\n--- {run_name} ---")
-            print(classification_report(y_test, y_pred, target_names=["non-miRNA", "pre-miRNA"]))
-
-            if acc > best_acc:
-                best_acc, best_name, best_model = acc, run_name, model
-                best_run_id = run.info.run_id
-
-    print(f"\nBest model: {best_name}  (accuracy={best_acc:.4f})")
-
-    model_uri = f"runs:/{best_run_id}/model"
-    mv = mlflow.register_model(model_uri, REGISTERED_MODEL_NAME)
-    print(f"Registered as '{REGISTERED_MODEL_NAME}' version {mv.version}")
-
-    MODELS_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(best_model, MODEL_PATH)
-    print(f"Saved to {MODEL_PATH}")
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 
 if __name__ == "__main__":

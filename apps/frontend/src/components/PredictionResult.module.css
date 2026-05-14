@@ -1,162 +1,135 @@
 .card {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  padding: 24px;
-<<<<<<< HEAD
-  border-radius: 20px;
-  border: 1px solid var(--color-border);
-  background:
-    radial-gradient(circle at top right, color-mix(in srgb, var(--color-accent-2) 16%, transparent), transparent 38%),
-    var(--color-surface);
-  box-shadow: 0 22px 50px rgba(15, 23, 42, 0.08);
-=======
-  border-radius: 12px;
-  border: 1px solid var(--color-border);
-  background: var(--color-surface);
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
-  animation: fadeIn 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    border-radius: 20px;
+    border: 1px solid var(--color-border);
+    background:
+        radial-gradient(
+            circle at top right,
+            color-mix(in srgb, var(--color-accent-2) 16%, transparent),
+            transparent 38%
+        ),
+        var(--color-surface);
+    box-shadow: 0 22px 50px rgba(15, 23, 42, 0.08);
+    animation: fadeIn 0.2s ease;
 }
 
 @keyframes fadeIn {
-<<<<<<< HEAD
-  from {
-    opacity: 0;
-    transform: translateY(6px);
-  }
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-=======
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .badge {
-  display: inline-block;
-  align-self: flex-start;
-  padding: 6px 16px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+    display: inline-block;
+    align-self: flex-start;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
 }
 
 .positive {
-  background: #dcfce7;
-  color: #15803d;
+    background: #dcfce7;
+    color: #15803d;
 }
 
 .negative {
-  background: #fee2e2;
-  color: #b91c1c;
+    background: #fee2e2;
+    color: #b91c1c;
 }
 
 .metrics {
-  display: flex;
-<<<<<<< HEAD
-  flex-wrap: wrap;
-=======
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
-  gap: 32px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
 }
 
 .metric {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .metricValue {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: var(--color-text);
-  line-height: 1;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1;
 }
 
 .metricLabel {
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
 }
 
 .barTrack {
-  height: 6px;
-  border-radius: 3px;
-  background: var(--color-border);
-  overflow: hidden;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--color-border);
+    overflow: hidden;
 }
 
 .barFill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.4s ease;
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
 }
 
-<<<<<<< HEAD
 .barPositive {
-  background: #22c55e;
+    background: #22c55e;
 }
 
 .barNegative {
-  background: #ef4444;
+    background: #ef4444;
 }
-=======
-.barPositive { background: #22c55e; }
-.barNegative { background: #ef4444; }
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
 
 .sequenceBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .seqLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-muted);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
 }
 
 .sequence {
-<<<<<<< HEAD
-  display: block;
-  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: 0.8rem;
-  line-height: 1.6;
-  word-break: break-all;
-  color: var(--color-text);
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  overflow-x: auto;
+    display: block;
+    font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    word-break: break-all;
+    color: var(--color-text);
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    overflow-x: auto;
 }
 
 @media (max-width: 720px) {
-  .card {
-    padding: 20px;
-  }
+    .card {
+        padding: 20px;
+    }
 
-  .metrics {
-    gap: 20px;
-  }
-=======
-  font-family: "JetBrains Mono", "Fira Code", "Courier New", monospace;
-  font-size: 0.78rem;
-  line-height: 1.6;
-  word-break: break-all;
-  color: var(--color-text);
-  padding: 10px 12px;
-  border-radius: 6px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
->>>>>>> d7a84cde81472fa331c529ee30cf2e30082145da
+    .metrics {
+        gap: 20px;
+    }
 }
